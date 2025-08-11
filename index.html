@@ -1,0 +1,148 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <style>
+    #yazar {
+      position: relative;
+      float: right;
+      font-size: 20px;
+      margin-top: 0px;
+    }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: #222;
+      color: #aaa;
+    }
+
+    div {
+      text-align: center;
+      font-size: 10vw;
+      margin-top: 20vh;
+    }
+
+    #gerisayim {
+      font-size: 15vw;
+      white-space: nowrap;
+    }
+
+    .fullscreen-icon {
+      position: relative;
+      top: -3px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 16px;
+      margin-left: 5px;
+    }
+
+    input[type="button"] {
+      height: 30px;
+      margin-left: 5px;
+    }
+
+    #progress-svg {
+      width: 80%;
+      height: 30px;
+      display: block;
+      margin: 30px auto;
+    }
+
+    rect {
+      transition: width 1s linear, fill 0.5s linear;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="yazar">Hazırlayan: Umut KARAKAŞ<br>Matematik Öğretmeni</div>
+
+  <p id="formyertutucu">
+    <form id="hedefzaman" method="post" name="myform">
+      <label>Sınavın bitiş saati:</label>
+      <input id="hedef" name="hedef" type="time">
+      <input onclick="baslat()" type="button" value="Başlat">
+      <i id="fullscreen-toggle" class="fullscreen-icon fas fa-expand" onclick="toggleFullScreen()"></i>
+    </form>
+  </p>
+
+  <p id="HedefSaat"></p>
+  <div id="gerisayim"></div>
+
+  <!-- SVG Progress Bar -->
+  <svg id="progress-svg" viewBox="0 0 100 10" preserveAspectRatio="none">
+    <!-- Arka plan çubuğu -->
+    <rect x="0" y="2" width="100" height="6" rx="1" ry="4" fill="#444" />
+    <!-- Dolan çubuk -->
+    <rect id="progress-bar" x="0" y="2" width="100" height="6" rx="1" ry="4" fill="#8fff8f" />
+  </svg>
+
+  <script>
+    var geriSayimZamanlayicisi;
+    let toplamSure = 0;
+
+    function toggleFullScreen() {
+      var doc = window.document;
+      var docEl = doc.documentElement;
+      var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+      var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+      if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+        requestFullScreen.call(docEl);
+      } else {
+        cancelFullScreen.call(doc);
+      }
+    }
+
+    function baslat() {
+      clearInterval(geriSayimZamanlayicisi);
+
+      var hedefZaman = document.getElementById("hedef").value;
+      var bugun = new Date();
+      var hedefTarih = new Date(bugun.toDateString() + " " + hedefZaman);
+      var suan = new Date();
+
+      toplamSure = hedefTarih - suan;
+      if (toplamSure > 0) {
+        document.getElementById("progress-bar").setAttribute("width", "100");
+        document.getElementById("progress-bar").setAttribute("fill", "#8fff8f");
+        geriSayimZamanlayicisi = geriSayim(hedefTarih);
+      }
+    }
+
+    function geriSayim(hedefTarih) {
+      return setInterval(function () {
+        var suan = new Date().getTime();
+        var kalanSure = hedefTarih - suan;
+
+        if (kalanSure <= 0) {
+          clearInterval(geriSayimZamanlayicisi);
+          document.getElementById("gerisayim").innerHTML = "Süre doldu";
+          document.getElementById("progress-bar").setAttribute("width", "0");
+          document.getElementById("progress-bar").setAttribute("fill", "#ff6666");
+        } else {
+          var dakika = Math.floor(kalanSure / (1000 * 60));
+          var saniye = Math.floor((kalanSure % (1000 * 60)) / 1000);
+
+          var geriSayimMetni = (dakika < 2)
+            ? dakika * 60 + saniye + " saniye"
+            : dakika + " dakika";
+
+          document.getElementById("gerisayim").innerHTML = geriSayimMetni;
+
+          var oran = kalanSure / toplamSure;
+          var genislik = Math.max(0, oran * 100);
+	const bar = document.getElementById("progress-bar");
+	bar.setAttribute("width", genislik);
+
+// HSL ile renk geçişi (120° = yeşil, 0° = kırmızı)
+	let hue = oran * 120; // oran 1 olduğunda 120 (yeşil), 0 olduğunda 0 (kırmızı)
+	bar.setAttribute("fill", `hsl(${hue}, 100%, 70%)`);
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
