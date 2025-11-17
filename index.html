@@ -1,148 +1,214 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-  <style>
-    #yazar {
-      position: relative;
-      float: right;
-      font-size: 20px;
-      margin-top: 0px;
-    }
+<style>
+  body {
+    font-family: 'Open Sans', sans-serif;
+    background: #1e1e1e;
+    color: #ddd;
+    text-align: center;
+  }
 
-    body {
-      font-family: 'Open Sans', sans-serif;
-      background-color: #222;
-      color: #aaa;
-    }
+  #yazar {
+    font-size: 20px;
+    float: right;
+    margin-top: 0px;
+  }
 
-    div {
-      text-align: center;
-      font-size: 10vw;
-      margin-top: 20vh;
-    }
+  #gerisayim {
+    font-size: 15vw;
+    margin-top: 25vh; /* Biraz aşağıya taşıdık */
+  }
 
-    #gerisayim {
-      font-size: 15vw;
-      white-space: nowrap;
-    }
+  /* --------------------------------------
+        GLASSMORPHISM PROGRESS BAR
+     -------------------------------------- */
+  #progress-container {
+    width: 80%;
+    height: 40px;
+    margin: 60px auto; /* Biraz aşağıya kaydırdık */
+    background: rgba(255, 255, 255, 0.10);
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    position: relative;
+    box-shadow: 0 0 25px rgba(255,255,255,0.10);
+  }
 
-    .fullscreen-icon {
-      position: relative;
-      top: -3px;
-      cursor: pointer;
-      color: #fff;
-      font-size: 16px;
-      margin-left: 5px;
-    }
+  #progress-container::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.25);
+    filter: blur(3px);
+    border-radius: 20px;
+  }
 
-    input[type="button"] {
-      height: 30px;
-      margin-left: 5px;
-    }
+  #progress-fill {
+    height: 100%;
+    width: 0%;
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 20px;
+    transition: width 0.6s ease, background 0.5s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.3),
+                0 0 15px rgba(255,255,255,0.5);
+  }
 
-    #progress-svg {
-      width: 80%;
-      height: 30px;
-      display: block;
-      margin: 30px auto;
-    }
+  #progress-fill::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 40%;
+    background: rgba(255,255,255,0.25);
+    filter: blur(10px);
+  }
 
-    rect {
-      transition: width 1s linear, fill 0.5s linear;
-    }
-  </style>
+  #glow-ball {
+    position: absolute;
+    top: 5px;
+    width: 28px;
+    height: 28px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    filter: blur(4px);
+    transition: left 0.6s ease;
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(255,255,255,0.8),
+                0 0 16px rgba(255,255,255,0.7);
+  }
+
+  #wave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 120%;
+    width: 200%;
+    opacity: 0.35;
+    animation: waveMove 4s linear infinite;
+    pointer-events: none;
+    fill: white;
+  }
+
+  @keyframes waveMove {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  input[type="button"] {
+    height: 30px;
+    margin-left: 5px;
+  }
+</style>
 </head>
 
 <body>
-  <div id="yazar">Hazırlayan: Umut KARAKAŞ<br>Matematik Öğretmeni</div>
 
-  <p id="formyertutucu">
-    <form id="hedefzaman" method="post" name="myform">
-      <label>Sınavın bitiş saati:</label>
-      <input id="hedef" name="hedef" type="time">
-      <input onclick="baslat()" type="button" value="Başlat">
-      <i id="fullscreen-toggle" class="fullscreen-icon fas fa-expand" onclick="toggleFullScreen()"></i>
-    </form>
-  </p>
+<div id="yazar">Hazırlayan: Umut KARAKAŞ<br>Matematik Öğretmeni</div>
 
-  <p id="HedefSaat"></p>
-  <div id="gerisayim"></div>
+<form id="hedefzaman">
+  <label>Sınavın bitiş saati:</label>
+  <input id="hedef" name="hedef" type="time">
+  <input onclick="baslat()" type="button" value="Başlat">
+  <input onclick="tamEkran()" type="button" value="Tam Ekran">
+</form>
 
-  <!-- SVG Progress Bar -->
-  <svg id="progress-svg" viewBox="0 0 100 10" preserveAspectRatio="none">
-    <!-- Arka plan çubuğu -->
-    <rect x="0" y="2" width="100" height="6" rx="1" ry="4" fill="#444" />
-    <!-- Dolan çubuk -->
-    <rect id="progress-bar" x="0" y="2" width="100" height="6" rx="1" ry="4" fill="#8fff8f" />
-  </svg>
+<div id="gerisayim"></div>
 
-  <script>
-    var geriSayimZamanlayicisi;
-    let toplamSure = 0;
+<div id="progress-container">
+  <div id="progress-fill">
+    <svg id="wave" viewBox="0 0 1200 200" preserveAspectRatio="none">
+      <path d="M0,60 C300,140 900,-20 1200,60 L1200,200 L0,200 Z"></path>
+    </svg>
+  </div>
+  <div id="glow-ball"></div>
+</div>
 
-    function toggleFullScreen() {
-      var doc = window.document;
-      var docEl = doc.documentElement;
-      var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
-      var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+<script>
+var geriSayimZamanlayicisi;
+let toplamSure = 0;
 
-      if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
-        requestFullScreen.call(docEl);
-      } else {
-        cancelFullScreen.call(doc);
-      }
-    }
+function tamEkran() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
 
-    function baslat() {
+function baslat() {
+  clearInterval(geriSayimZamanlayicisi);
+
+  var hedefZaman = document.getElementById("hedef").value;
+  var bugun = new Date();
+  var hedefTarih = new Date(bugun.toDateString() + " " + hedefZaman);
+  var suan = new Date();
+
+  toplamSure = hedefTarih - suan;
+
+  if (toplamSure > 0) {
+    document.getElementById("progress-fill").style.width = "100%";
+    geriSayimZamanlayicisi = geriSayim(hedefTarih);
+  }
+}
+
+function geriSayim(hedefTarih) {
+  return setInterval(function () {
+    var suan = new Date().getTime();
+    var kalanSure = hedefTarih - suan;
+
+    if (kalanSure <= 0) {
       clearInterval(geriSayimZamanlayicisi);
 
-      var hedefZaman = document.getElementById("hedef").value;
-      var bugun = new Date();
-      var hedefTarih = new Date(bugun.toDateString() + " " + hedefZaman);
-      var suan = new Date();
+      document.getElementById("gerisayim").innerHTML = "Süre doldu";
 
-      toplamSure = hedefTarih - suan;
-      if (toplamSure > 0) {
-        document.getElementById("progress-bar").setAttribute("width", "100");
-        document.getElementById("progress-bar").setAttribute("fill", "#8fff8f");
-        geriSayimZamanlayicisi = geriSayim(hedefTarih);
-      }
+      const bar = document.getElementById("progress-fill");
+      bar.style.width = "0%";
+      bar.style.background = "rgba(255,80,80,0.45)";
+      document.getElementById("glow-ball").style.left = "-20px";
+
+      return;
     }
 
-    function geriSayim(hedefTarih) {
-      return setInterval(function () {
-        var suan = new Date().getTime();
-        var kalanSure = hedefTarih - suan;
+    var dakika = Math.floor(kalanSure / (1000 * 60));
+    var saniye = Math.floor((kalanSure % (1000 * 60)) / 1000);
 
-        if (kalanSure <= 0) {
-          clearInterval(geriSayimZamanlayicisi);
-          document.getElementById("gerisayim").innerHTML = "Süre doldu";
-          document.getElementById("progress-bar").setAttribute("width", "0");
-          document.getElementById("progress-bar").setAttribute("fill", "#ff6666");
-        } else {
-          var dakika = Math.floor(kalanSure / (1000 * 60));
-          var saniye = Math.floor((kalanSure % (1000 * 60)) / 1000);
+    document.getElementById("gerisayim").innerHTML =
+      (dakika < 2)
+      ? (dakika * 60 + saniye) + " saniye"
+      : dakika + " dakika";
 
-          var geriSayimMetni = (dakika < 2)
-            ? dakika * 60 + saniye + " saniye"
-            : dakika + " dakika";
+    var oran = kalanSure / toplamSure;
+    var genislik = Math.max(0, oran * 100);
 
-          document.getElementById("gerisayim").innerHTML = geriSayimMetni;
+    const bar = document.getElementById("progress-fill");
+    const glow = document.getElementById("glow-ball");
 
-          var oran = kalanSure / toplamSure;
-          var genislik = Math.max(0, oran * 100);
-	const bar = document.getElementById("progress-bar");
-	bar.setAttribute("width", genislik);
+    bar.style.width = genislik + "%";
 
-// HSL ile renk geçişi (120° = yeşil, 0° = kırmızı)
-	let hue = oran * 120; // oran 1 olduğunda 120 (yeşil), 0 olduğunda 0 (kırmızı)
-	bar.setAttribute("fill", `hsl(${hue}, 100%, 70%)`);
-        }
-      }, 1000);
-    }
-  </script>
+    let hue = oran * 120;  
+    bar.style.background = `hsla(${hue}, 100%, 75%, 0.45)`;
+    bar.style.boxShadow = `0 0 18px hsla(${hue}, 100%, 75%, 0.55)`;
+
+    glow.style.left = `calc(${genislik}% - 14px)`;
+
+  }, 1000);
+}
+</script>
+
 </body>
 </html>
